@@ -1,7 +1,7 @@
 import sqlite3
 
 from PyQt5 import QtCore, QtGui, QtWidgets
-
+print("hello")
 
 class Ui_Dialog(object):
     def setupUi(self, Dialog):
