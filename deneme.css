@@ -1,1 +1,32 @@
+/* styles.css */
 
+body {
+  background-color: #f0f0f0 !important;
+  font-family: Arial, sans-serif !important;
+}
+
+h1 {
+  color: red !important;
+  font-size: 32px !important;
+}
+
+.button {
+  background-color: blue !important;
+  color: white !important;
+  padding: 10px 20px !important;
+}
+body {
+  background-color: #f0f0f0 !important;
+  font-family: Arial, sans-serif !important;
+}
+
+h1 {
+  color: red !important;
+  font-size: 32px !important;
+}
+
+.button {
+  background-color: blue !important;
+  color: white !important;
+  padding: 10px 20px !important;
+}
