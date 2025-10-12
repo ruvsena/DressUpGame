@@ -1,0 +1,73 @@
+name: CSS Important Check
+
+on:
+  pull_request_target:
+
+jobs:
+  check-css:
+    name: Check-CSS-Important
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          ref: refs/pull/${{ github.event.pull_request.number }}/merge
+          token: ${{ secrets.GITHUB_TOKEN }}
+          fetch-depth: 0
+
+      - name: Get changed files
+        id: changed-files
+        uses: tj-actions/changed-files@v44
+        with:
+          files_ignore: |
+            "**/dist/**"
+            "**/ext/**"
+            "**/*.min.css"
+
+      - name: Check for !important
+        id: important-check
+        run: |
+          echo "Checking changed CSS files for !important..."
+          found=false
+          for file in ${{ steps.changed-files.outputs.all_changed_files }}; do
+            if [[ "$file" == *.css ]]; then
+              if grep -q "!important" "$file"; then
+                echo "Found !important in $file"
+                echo "$file" >> important-files.log
+                found=true
+              fi
+            fi
+          done
+
+          if [ "$found" = true ]; then
+            echo "needs_cleanup=true" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Prepare PR comment
+        id: prepare-comment
+        if: steps.important-check.outputs.needs_cleanup == 'true'
+        run: |
+          {
+            echo 'comment<<EOF'
+            echo "🚨 **CSS files should not use !important**. Please remove them."
+            echo
+            echo "<details><summary>Files with !important</summary>"
+            echo
+            echo '```'
+            cat important-files.log
+            echo '```'
+            echo "</details>"
+            echo 'EOF'
+          } >> "$GITHUB_OUTPUT"
+
+      - name: Comment on PR if !important exists
+        if: steps.important-check.outputs.needs_cleanup == 'true'
+        uses: thollander/actions-comment-pull-request@v2
+        with:
+          message: ${{ steps.prepare-comment.outputs.comment }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Fail job if !important exists
+        if: steps.important-check.outputs.needs_cleanup == 'true'
+        run: exit 1
