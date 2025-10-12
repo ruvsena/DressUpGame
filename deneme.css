@@ -1,17 +1,17 @@
 
 body {
-  background-color: #f0f0f0 !important;
-  font-family: Arial, sans-serif !important;
+  background-color: #f0f0f0 ;
+  font-family: Arial, sans-serif 
 }
 
 h1 {
-  color: red !important;
-  font-size: 32px !important;
+  color: red ;
+  font-size: 32px 
 }
 
 .button {
-  background-color: blue !important;
-  color: white !important;
-  padding: 10px 20px !important;
+  background-color: blue ;
+  color: white ;
+  padding: 10px 20px 
 }
-/*hello
+/*hello 
