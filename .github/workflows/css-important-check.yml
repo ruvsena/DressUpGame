@@ -3,6 +3,10 @@ name: CSS Important Check
 on:
   pull_request_target:
 
+permissions:
+  contents:read
+  pull_request:write
+
 jobs:
   check-css:
     name: Check-CSS-Important
