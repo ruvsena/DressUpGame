@@ -4,8 +4,8 @@ on:
   pull_request_target:
 
 permissions:
-  contents:read
-  pull_request:write
+  contents: read
+  pull-requests: write
 
 jobs:
   check-css:
