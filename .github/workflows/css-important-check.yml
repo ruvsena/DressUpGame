@@ -2,7 +2,7 @@ name: CSS Important Control
 
 on:
   pull_request:
-    
+
 permissions:
   contents: read
   pull-requests: write
@@ -31,6 +31,7 @@ jobs:
         with:
           script: |
             const fs = require('fs');
+            const core = require('@actions/core');
             const files = `${{ steps.changed.outputs.all_changed_files }}`.split(' ');
             let found = false;
 
@@ -44,7 +45,7 @@ jobs:
               }
             }
 
-            if (found) core.setOutput('needs_cleanup', 'true');
+            core.setOutput('needs_cleanup', found ? 'true' : 'false');
 
       - name: Comment on PR
         if: steps.check.outputs.needs_cleanup == 'true'
