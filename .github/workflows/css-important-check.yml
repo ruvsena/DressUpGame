@@ -1,39 +1,61 @@
-name: CSS-Important-Check
 
-on: pull_request_target
+name: CSS Important Check
+
+on:
+  pull_request:
 
 permissions:
   contents: read
   pull-requests: write
 
 jobs:
-  check:
+  check-css:
+    name: Check-CSS-Important
     runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
 
-      - uses: tj-actions/changed-files@v44
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Get changed files
         id: changed
+        uses: tj-actions/changed-files@v44
         with:
           files_ignore: |
-            **/dist/**
-            **/*.min.css
+            "**/dist/**"
+            "**/ext/**"
+            "**/*.min.css"
 
-      - name: Detect !important
-        id: important
-        run: |
-          echo "${{ steps.changed.outputs.all_changed_files }}" | xargs grep -Hn "!important" || true
+      - name: Check for !important
+        id: check
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const fs = require('fs');
+            const files = `${{ steps.changed.outputs.all_changed_files }}`.split(' ');
+            let found = false;
 
-      - name: Comment and Fail if found
-        if: always() && contains(steps.important.outputs.stdout, '!important')
+            for (const file of files) {
+              if (file.endsWith('.css') && fs.existsSync(file)) {
+                const content = fs.readFileSync(file, 'utf8');
+                if (content.includes('!important')) {
+                  found = true;
+                  break;
+                }
+              }
+            }
+
+            if (found) core.setOutput('needs_cleanup', 'true');
+
+      - name: Comment on PR
+        if: steps.check.outputs.needs_cleanup == 'true'
         uses: thollander/actions-comment-pull-request@v2
         with:
-          message: |
-            🚨 **Found '!important' in CSS files**
-            Please remove them before merging.
-        env:
+          message: "🚨 **CSS files contain `!important`**"
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Fail if !important exists
-        if: contains(steps.important.outputs.stdout, '!important')
-        run: exit 1
+      - name: Fail if !important found
+        if: steps.check.outputs.needs_cleanup == 'true'
+        run: |
+          echo "❌ Found '!important' in CSS files. Please remove them."
+          exit 1
