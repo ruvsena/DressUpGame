@@ -1,4 +1,4 @@
-name: CSS Important Control
+name: CSS Important Check
 
 on:
   pull_request:
@@ -15,6 +15,10 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
+        with:
+          ref: refs/pull/${{ github.event.pull_request.number }}/merge
+          token: ${{ secrets.GITHUB_TOKEN }}
+          fetch-depth: 0
 
       - name: Get changed files
         id: changed
