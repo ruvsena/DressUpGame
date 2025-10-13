@@ -1,0 +1,17 @@
+/* Basit CSS dosyası 
+*/
+
+body {
+    background-color: lightblue !important;
+    font-family: Arial, sans-serif;
+}
+
+h1 {
+    color: darkblue !important;
+    text-align: center;
+}
+
+p {
+    color: black;
+    font-size: 16px !important;
+}
