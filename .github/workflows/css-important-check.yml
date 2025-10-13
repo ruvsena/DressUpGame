@@ -2,7 +2,8 @@
 name: CSS Important Check
 
 on:
-  pull_request:
+  pull_request_target:
+
 
 permissions:
   contents: read
@@ -22,7 +23,7 @@ jobs:
           fetch-depth: 0
 
       - name: Get changed files
-        id: changed
+        id: changed-files
         uses: tj-actions/changed-files@v44
         with:
           files_ignore: |
@@ -31,36 +32,48 @@ jobs:
             "**/*.min.css"
 
       - name: Check for !important
-        id: check
-        uses: actions/github-script@v7
-        with:
-          script: |
-            const fs = require('fs');
-            const core = require('@actions/core');
-            const files = `${{ steps.changed.outputs.all_changed_files }}`.split(' ');
-            let found = false;
+        id: important-check
+        run: |
+          echo "Checking changed CSS files for !important..."
+          found=false
+          for file in ${{ steps.changed-files.outputs.all_changed_files }}; do
+            if [[ "$file" == *.css ]]; then
+              if grep -q "!important" "$file"; then
+                echo "Found !important in $file"
+                echo "$file" >> important-files.log
+                found=true
+              fi
+            fi
+          done
 
-            for (const file of files) {
-              if (file.endsWith('.css') && fs.existsSync(file)) {
-                const content = fs.readFileSync(file, 'utf8');
-                if (content.includes('!important')) {
-                  found = true;
-                  break;
-                }
-              }
-            }
+          if [ "$found" = true ]; then
+            echo "needs_cleanup=true" >> $GITHUB_OUTPUT
+          fi
 
-            core.setOutput('needs_cleanup', found ? 'true' : 'false');
+      - name: Prepare PR comment
+        id: prepare-comment
+        if: steps.important-check.outputs.needs_cleanup == 'true'
+        run: |
+          {
+            echo 'comment<<EOF'
+            echo "🚨 **CSS files should not use !important**. Please remove them."
+            echo
+            echo "<details><summary>Files with !important</summary>"
+            echo
+            echo '```'
+            cat important-files.log
+            echo '```'
+            echo "</details>"
+            echo 'EOF'
+          } >> "$GITHUB_OUTPUT"
 
-      - name: Comment on PR
-        if: steps.check.outputs.needs_cleanup == 'true'
+      - name: Comment on PR if !important exists
+        if: steps.important-check.outputs.needs_cleanup == 'true'
         uses: thollander/actions-comment-pull-request@v2
         with:
-          message: "🚨 **CSS files contain `!important`**"
+          message: ${{ steps.prepare-comment.outputs.comment }}
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Fail if !important found
-        if: steps.check.outputs.needs_cleanup == 'true'
-        run: |
-          echo "❌ Found '!important' in CSS files. Please remove them."
-          exit 1
+      - name: Fail job if !important exists
+        if: steps.important-check.outputs.needs_cleanup == 'true'
+        run: exit 1
