@@ -1,6 +1,10 @@
-
-
 from PyQt5 import QtCore, QtGui, QtWidgets
+print("ola!")
+
+
+
+
+
 
 
 class Ui_Dialog(object):
